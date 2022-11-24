@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1">
+    <title>BDS Planning</title>
+    <script src="Import/three.js"></script>
+    <script src="Import/TrackballControls.js"></script>
+    <script src="Import/jquery-3.6.0.min.js"></script>
+    <script src="FileProcess/FileHelper.js"></script>
+    <script src="FileProcess/ReadObstacle.js"></script>
+    <script src="DataStructure/Satellite.js"></script>
+    <script src="Calculation/CalcaluatePosition.js"></script>
+    <script src="Calculation/TerrainInterpolation.js"></script>
+    <script src="DataStructure/OrbitPoint.js"></script>
+    <script src="Calculation/TimeTrans.js"></script>
+    <script src="Import/math.js"></script>
+    <script src="2DView/Draw.js"></script>
+    <script src="3DView/Animation.js"></script>
+    <script src="Calculation/CoorTrans.js"></script>
+    <script src="DataStructure/Station.js"></script>
+    <script src="Import/echarts.js"></script>
+    <script src="2DView/Charts.js"></script>
+    <script src="Import/anime.min.js"></script>
+    <script src="Import/FileSaver.js"></script>
+    <script src="DataStructure/Point.js"></script>
+    <script src="DataStructure/SamplingPram.js"></script>
+    <script src="2DView/Progress.js"></script>
+
+    <link rel="stylesheet" href="CSS/webStyle.css">
+    <link rel="stylesheet" href="CSS/navStyle.css">
+    <link rel="stylesheet" href="CSS/pAPStyle.css">
+    <link rel="stylesheet" href="CSS/settingBoxStyle.css">
+
+    <!--引用Cesium-->
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.85/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.85/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+
+    <!--引用百度地图-->
+    <script type="text/javascript" src="//api.map.baidu.com/api?type=webgl&v=1.0&ak=Nn4zIstmXHZYLgLoyrPv4WPGDBS8fZCC"></script>
+
+    <style>
+        #TOSPDiv {
+            display: none;
+            background-color: #00aaff;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        #background {
+            background-image: url('Texture/Earth.jpg');
+            background-size: cover;
+            width: 1080px;
+            height: 540px;
+            display: block;
+            position: absolute;
+            left: 50px;
+            bottom: 45px
+        }
+
+        .progress {
+            transform: translate(50%, 50%);
+            stroke-dasharray: 377;
+            stroke-dashoffset: 377;
+        }
+
+        .indexText {
+            transform: translate(50%, 50%);
+        }
+    </style>
+</head>
+
+<body id="body">
+<div class="header" style="user-select: none">
+    <div class="navigation">
+        <label class="logo1"><i>BDS</i></label>
+        <label class="logo2"><small>&nbsp;<i>planning</i></small></label>
+        <ul>
+            <li><a class="click" id="ecefOrbit" onclick="DrawOrbit(satellites,'ECEF')">ECEF轨道</a></li>
+            <li><a class="click" id="eciOrbit" onclick="DrawOrbit(satellites,'ECI')">ECI轨道</a></li>
+            <li><a class="click" id="drawTOSP" onclick="DrawTOSP(satellites)">星下点轨迹图</a></li>
+            <li><a class="click" id="drawSkyPlot" onclick="DrawSkyPlot(station,satellites)">测站天空图</a></li>
+            <li><a class="click" id="drawCharts" onclick="DrawCharts(satellites)">图表</a></li>
+            <li><a class="click" id="nav_Help">帮助
+                <div class="helpDiv">
+                    <h3 id="tittltText" style="text-align: center"><strong>BDS Planning---功能简介</strong></h3>
+                    <p>①&nbsp 历书设置与读取：设定相关参数，指定卫星状态预报时间段<br>
+                        ②&nbsp 星座显示与动态运行：读取历书设置后，可提供任意视角BDS星座在ECEF和ECI坐标系下的动态运行<br>
+                        ③&nbsp 星下点轨迹图：读取历书设置后，可提供2D的BDS星座动态星下点轨迹图<br>
+                        ④&nbsp 测站信息保存：保存测站信息，用以向测站天空图和图表的绘制提供数据<br>
+                        ⑤&nbsp 测站天空图：读取历书设置以及测站信息后，可提供2D的BDS星座动态测站天空图<br>
+                        ⑥&nbsp 图表：读取历书设置及测站信息后，可提供卫星可见数与DOPs时序图两种图表<br>
+                    </p>
+                </div>
+            </a>
+            </li>
+        </ul>
+    </div>
+</div>
+<!-- 取消浮动 -->
+<div class="clear"></div>
+
+<div class="main">
+    <div class="setting" style="user-select: none">
+        <div class="playAndPause" id="playAndPause" style="display: none">
+            <div class="time"><strong id="timeText" style="display: none"></strong>
+            </div>
+
+            <button id="playButton">
+                <div id="play">
+                </div>
+            </button>
+
+            <button id="pauseButton">
+                <div id="pause">
+                </div>
+            </button>
+
+            <input type="range" id="range">
+        </div>
+
+        <div class="settingBox1">
+            <div class="settingBoxTittle">当前设置
+            </div>
+
+            <table class="settingBoxTable1">
+                <tr>
+                    <th>历书:</th>
+                    <td>
+                        <select class="Select" id="almSelector">
+                            <option value="almanac.alm">almanac.alm</option>
+                            <option value="conv1780.21alc">conv1980.21alc</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th>选取日期:</th>
+                    <td>
+                        <input type="date" id="dateSelector" value="2021-06-20">
+                    </td>
+                </tr>
+                <tr>
+                    <th>开始时间:</th>
+                    <td>
+                        <select class="Select" id="startTimeSelector">
+                            <option value=0>00:00</option>
+                            <option value=1>01:00</option>
+                            <option value=2>02:00</option>
+                            <option value=3>03:00</option>
+                            <option value=4>04:00</option>
+                            <option value=5>05:00</option>
+                            <option value=6>06:00</option>
+                            <option value=7>07:00</option>
+                            <option value=8>08:00</option>
+                            <option value=9>09:00</option>
+                            <option value=10>10:00</option>
+                            <option value=11>11:00</option>
+                            <option value=12>12:00</option>
+                            <option value=13>13:00</option>
+                            <option value=14>14:00</option>
+                            <option value=15>15:00</option>
+                            <option value=16>16:00</option>
+                            <option value=17>17:00</option>
+                            <option value=18>18:00</option>
+                            <option value=19>19:00</option>
+                            <option value=20>20:00</option>
+                            <option value=21>21:00</option>
+                            <option value=22>22:00</option>
+                            <option value=23>23:00</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th>时长:</th>
+                    <td>
+                        <select class="Select" id="periodSelector">
+                            <option value=6>6h</option>
+                            <option value=12>12h</option>
+                            <option value=24>24h</option>
+                        </select>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <a class="setting_sure" onclick="fileRead()">设定</a>
+        <div class="settingBox2">
+            <table class="settingBoxTable2">
+                <tr>
+                    <th>MEO</th>
+                    <td>
+                        <div class="wrapper">
+                            <div class="wrapper">
+                                <form method="post" style="transform: translate(0%,30%);margin-right: 10px">
+                                    <input type="checkbox" name="display" id="MEOOn" style="zoom: 150%"
+                                           checked disabled onchange="DisplayOrNot(MEO,this.id)" />
+                                </form>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>GEO</th>
+                    <td>
+                        <div class="wrapper">
+                            <form method="post" style="transform: translate(0%,30%);margin-right: 10px">
+                                <input type="checkbox" name="display" id="GEOOn" style="zoom: 150%"
+                                       checked disabled onchange="DisplayOrNot(GEO,this.id)" />
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>IGSO</th>
+                    <td>
+                        <div class="wrapper">
+                            <form method="post" style="transform: translate(0%,30%);margin-right: 10px">
+                                <input type="checkbox" name="display" id="IGSOOn" style="zoom: 150%"
+                                       checked disabled onchange="DisplayOrNot(IGSO,this.id)"  />
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Obstacle</th>
+                    <td>
+                        <div class="wrapper">
+                            <form method="post" style="transform: translate(0%,30%);margin-right: 10px">
+                                <input type="file" id="fileInput">
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="settingBox2">
+            <table class="settingBoxTable2">
+                <tr>
+                    <th>测站经度:</th>
+                    <td>
+                        <div class="wrapper">
+                            <input type="text" id="stationL" title="例：116 00 00" required onchange="IsLCorrect()">
+                            <!-- 添加“underline”使得文本框底边界能够添加特效 -->
+                            <div class="underline"></div>
+                            <label><small>dd mm ss</small></label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>测站纬度:</th>
+                    <td>
+                        <div class="wrapper">
+                            <input type="text" id="stationB" title="例：40 00 00" required onchange="IsBCorrect()">
+                            <!-- 添加“underline”使得文本框底边界能够添加特效 -->
+                            <div class="underline"></div>
+                            <label><small>dd mm ss</small></label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>测站高(m):</th>
+                    <td>
+                        <div class="wrapper">
+                            <input type="text" id="stationH" title="例：500" required>
+                            <!-- 添加“underline”使得文本框底边界能够添加特效 -->
+                            <div class="underline"></div>
+                            <label><small>m</small></label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>截止高度角:</th>
+                    <td>
+                        <div class="wrapper">
+                            <input type="text" id="ElevationCutOff" title="例：15" required>
+                            <!-- 添加“underline”使得文本框底边界能够添加特效 -->
+                            <div class="underline"></div>
+                            <label><small>degree</small></label>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <a class="setting_sure" onclick="ParseStation_B_L()">确定</a>
+        <div class="settingBox2">
+            <table class="settingBoxTable2">
+                <tr>
+                    <th>采样半径(km)：</th>
+                    <td>
+                        <div class="wrapper">
+                            <input type="text" id="radius" title="例：2" required>
+                            <!-- 添加“underline”使得文本框底边界能够添加特效 -->
+                            <div class="underline"></div>
+                            <label><small>km</small></label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>径向划分数：</th>
+                    <td>
+                        <div class="wrapper">
+                            <input type="text" id="divide" title="例：72" required>
+                            <!-- 添加“underline”使得文本框底边界能够添加特效 -->
+                            <div class="underline"></div>
+                            <label><small>n</small></label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>采样间隔(m):</th>
+                    <td>
+                        <div class="wrapper">
+                            <input type="text" id="interval" title="例：50" required>
+                            <!-- 添加“underline”使得文本框底边界能够添加特效 -->
+                            <div class="underline"></div>
+                            <label><small>m</small></label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>是否进行采样：</th>
+                    <td>
+                        <select class="Select" id="OnOff">
+                            <option value=false>否</option>
+                            <option value=true>是</option>
+                        </select>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <a class="setting_sure" onclick="ParseSamplingPram()">设定</a>
+        <div class="settingBox2">
+            <svg class="progressContainer" style="width: 100%;height: 100%">
+                <text x="13" y="25" style="font-size: 16px;font-weight: bold">地形采样进度：</text>
+                <circle class="progress" cx="0" cy="0" r="60"
+                        fill="transparent" stroke="#6495ED"
+                        stroke-width="10"></circle>
+                <text class="indexText" x="0" y="0" fill="#6495ED"
+                      text-anchor="middle"
+                      alignment-baseline="middle" style="font-size: 40px">0%
+                </text>
+            </svg>
+        </div>
+    </div>
+    <div class="content" id="content" style="position: relative">
+        <!--星下点轨迹图-->
+        <div id="TOSPDiv">
+            <div id="background">
+            </div>
+        </div>
+
+        <!--天空图-->
+        <div id="SkyPlotDiv" style="display:none;width: 100%;height: 100%; position: relative">
+            <div id="SkyPlot" style="width: 640px;height: 640px;top: 50%;left:50%;
+            transform: translate(-50%,-50%); position: absolute; background-color: #00aaff; display: block">
+            </div>
+        </div>
+
+        <!--3D视窗-->
+        <div id="3dView">
+            <script src="FileProcess/ReadAlmanac.js"></script>
+            <script src="3DView/InitInterface.js"></script>
+        </div>
+
+        <!--Cesium3D地球 默认隐藏-->
+        <div id="cesiumContainer" style="display: none"></div>
+        <script>
+            Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwNjJmOTlkMC1mYWYwLTQ2YzQtYWUyNC03NTg2ODM1MzBjNjciLCJpZCI6NjA0NjUsImlhdCI6MTYyNTA5NjU2OH0.PjE7F9Jy3nOPGZqumWHQkNHYTrIZ8bkPHJTRYjL6NfE';
+            let viewer = new Cesium.Viewer('cesiumContainer');
+        </script>
+
+        <!--图表-->
+        <div id="Charts" style="display: none;width: 100%;height: 100%">
+        </div>
+
+        <!--百度地图-->
+        <div id="allmap" style="width: 100%;height: 100%">
+            <script src="2DView/InitBaiduMap.js"></script>
+        </div>
+
+        <!--SVG路径集合-->
+        <svg id="PathCollection" style="display: none"></svg>
+    </div>
+</div>
+</body>
+</html>

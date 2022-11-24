@@ -1,0 +1,51 @@
+* {
+  padding: 0;
+  margin: 0;
+  text-decoration: none;
+  list-style: none;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Microsoft YaHei UI";
+  width: 1535px;
+  height: 745px;
+}
+
+/*一级标签*/
+.header {
+  width: 100%;
+  height: 14%;
+}
+.navigation {
+  background: #0082e6;
+  width: 100%;
+  height: 100%;
+}
+.main {
+  width: 100%;
+  height: 86%;
+  float: left;
+
+  /* 网络自适应设置 */
+  display: flex;
+}
+
+.setting {
+  float: left;
+  background: rgb(255, 255, 255);
+  width: 20%;
+  height: 100%;
+  padding: 5px 10px 5px 10px;
+}
+
+.content {
+  float: left;
+  display: block;
+  margin: 0 auto;
+  /*background: #7d8fa3;*/
+  background: #ffffff;
+  border-left: 10px solid whitesmoke;
+  width: 80%;
+  height: 100%;
+}

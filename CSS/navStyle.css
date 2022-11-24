@@ -1,0 +1,93 @@
+/* 字体Logo样式设计 */
+.logo1 {
+  float: left;
+  color: white;
+  font-size: 50px;
+  line-height: 100px;
+  padding-left: 50px;
+  font-weight: bold;
+}
+
+.logo2 {
+  float: left;
+  color: white;
+  font-size: 30px;
+  line-height: 80px;
+  padding-left: 0;
+  padding-top: 20px;
+  font-weight: bold;
+  padding-right: 100px; /*logo和导航栏间隔*/
+}
+/*导航栏*/
+ul {
+  float: left;
+  margin-top: 20px;
+}
+ul li {
+  display: inline-block;
+  line-height: 80px;
+  margin: 0 5px;
+}
+ul li a {
+  color: white;
+  font-size: 17px;
+  padding: 7px 13px;
+  border-radius: 3px;
+  box-shadow: 5px 5px 10px -4px rgba(0, 0, 0, 0.5);
+  /* border-right: 2px solid rgb(231, 231, 231);
+    border-bottom: 2px solid rgb(231, 231, 231); */
+  /* box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2); */
+  position: relative;
+}
+/*设置鼠标悬停和点击的效果*/
+ul li a:hover,
+.click:focus {
+  cursor: pointer; /*悬停或点击时鼠标为小手样式*/
+  background: #1b9bff;
+  transition: 0.5s;
+}
+
+/* 设置帮助栏内容弹窗特效 */
+.helpDiv {
+  line-height: normal; /* 取消父级元素导航栏的线高设置 */
+  position: absolute;
+  top: 80px;
+  width: 450px;
+  height: 320px;
+  padding: 20px 30px;
+  background-color: white;
+  box-shadow: 5px 5px 10px -4px rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  visibility: hidden;
+  opacity: 0;
+  transition: 0.5s;
+  /* transform: translateX(-50%) translateY(-50%); */
+}
+.helpDiv h3,
+p {
+  color: #18527e;
+  margin-bottom: 5px;
+}
+ul #nav_Help:hover .helpDiv {
+  visibility: visible;
+  z-index: 999;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  cursor: default;
+}
+/* 制作提示框的三角形 */
+.helpDiv::before {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 10px;
+  background-color: white;
+  top: 0;
+  left: 255px;
+  transform: rotate(45deg);
+}
+
+/*清除浮动*/
+.clear {
+  clear: both;
+}
