@@ -574,7 +574,11 @@ function DrawSkyPlot(station, satellites) {
 let newElevPoints = [];
 
 function TrackSegment(station, satellites) {
-    if (control === "true") {
+
+    if (contorl2 == true){
+        newElevPoints = stations
+    }
+    else if (control === "true") {
         newElevPoints = [];
         //将点集按方位角顺序排列
         for (let i = 0; i < elevPoints.length; i++) {
@@ -880,7 +884,7 @@ function InitSkyPlot(svg) {
         //绘制环视障碍物
         DrawObstacle(cutOffCircleRadius, stations, svg);
     }
-        else if (control === "true") {
+    else if (control === "true") {
             //绘制环视障碍物
             DrawObstacle(cutOffCircleRadius, newElevPoints, svg);
         }

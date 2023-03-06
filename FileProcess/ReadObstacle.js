@@ -1,5 +1,5 @@
-var stations=new Array()
-var contorl2=false;
+let stations=new Array()
+let contorl2=false;
 
 window.onload=function (){
     var stationArray=new Array()
