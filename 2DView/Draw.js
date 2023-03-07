@@ -600,7 +600,7 @@ function TrackSegment(station, satellites) {
         //根据截止高度角计算轨迹
         for (let j = 0; j < sat.orbitPoints.length; j++) {
             let point = sat.orbitPoints[j];
-            if (control === "true") {
+            if (control === "true"|| contorl2===true) {
                 let flag = CalcPointInPolygon(point, newElevPoints);
                 point.flag = flag;
                 if (point.E >= station.elevationCutOff * d2a && flag) {
