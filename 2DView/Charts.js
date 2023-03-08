@@ -62,7 +62,7 @@ function DrawNumber(satellites) {
     //图表数据
     let data = [];
 
-    if (control === "true") {
+    if (control === "true"|| contorl2===true) {
         newElevPoints = [];
         //将点集按方位角顺序排列
         for (let i = 0; i < elevPoints.length; i++) {
@@ -86,7 +86,7 @@ function DrawNumber(satellites) {
             let sat = satellites[j];
             point = sat.orbitPoints[i];
 
-            if (control === "true") {
+            if (control === "true"|| contorl2===true) {
                 let flag = CalcPointInPolygon(point, newElevPoints);
                 point.flag = flag;
                 if (point.E * a2d >= station.elevationCutOff && flag) {
@@ -170,7 +170,7 @@ function DrawDOP(satellites) {
             let sat = satellites[j];
             point = sat.orbitPoints[i];
 
-            if (control === "true") {
+            if (control === "true"|| contorl2===true) {
                 if (point.E * a2d >= station.elevationCutOff && point.flag) {
                     number++;
 
